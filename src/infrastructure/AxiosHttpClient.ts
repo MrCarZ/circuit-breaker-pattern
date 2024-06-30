@@ -1,12 +1,16 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import axios, { Axios, AxiosResponse } from "axios";
+import { Axios, AxiosResponse } from "axios";
 import HttpClient from "../interfaces/HttpClient";
 import { HttpRequest } from "../types/http/HttpRequest";
 import { HttpResponse } from "../types/http/HttpResponse";
 import { HttpStatusCode } from "../enums/HttpStatusCode";
 
 export default class AxiosHttpClient implements HttpClient {
-  private readonly axios: Axios = axios;
+  private readonly axios: Axios;
+
+  constructor(axios: Axios) {
+    this.axios = axios;
+  }
 
   async request<T>(requestParameters: HttpRequest): Promise<HttpResponse<T>> {
     const { body, method, url, params, header, withCredentials } =
