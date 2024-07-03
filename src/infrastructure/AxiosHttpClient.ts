@@ -18,6 +18,15 @@ export default class AxiosHttpClient implements HttpClient {
 
     let axiosResponse: AxiosResponse;
 
+    // Simulated Internal Server Error
+    if (Math.random() < 0.5) {
+      return {
+        statusCode: HttpStatusCode.InternalServerError,
+        data: {} as T,
+        header: undefined,
+      };
+    }
+
     try {
       axiosResponse = await this.axios.request({
         method,

@@ -1,6 +1,5 @@
 import { HttpMethod } from "../enums/HttpMethod";
-import HttpClient from "../interfaces/HttpClient";
-import { DefaultDataType } from "../types/data/DefaultDataType";
+import CircuitBreaker from "../interfaces/CircuitBreaker";
 import { getResponse } from "./utils/getResponse";
 
 export type ExportParams = {
@@ -10,21 +9,15 @@ export type ExportParams = {
 
 export default class RemoteTask {
   protected readonly url: string;
-  protected readonly httpClient: HttpClient;
-  // protected readonly circuitBreaker: CircuitBreaker;
+  protected circuitBreaker: CircuitBreaker;
 
-  constructor(
-    url: string,
-    httpClient: HttpClient
-    // circuitBreaker: CircuitBreaker
-  ) {
+  constructor(url: string, circuitBreaker: CircuitBreaker) {
     this.url = url;
-    this.httpClient = httpClient;
-    // this.circuitBreaker = circuitBreaker;
+    this.circuitBreaker = circuitBreaker;
   }
 
-  async findAllTasks<T>(): Promise<DefaultDataType<T>> {
-    const response = await this.httpClient.request<DefaultDataType<T>>({
+  async findAllTasks<T>(): Promise<T> {
+    const response = await this.circuitBreaker.fire<T>({
       url: this.url,
       method: HttpMethod.GET,
     });
@@ -32,8 +25,8 @@ export default class RemoteTask {
     return getResponse(response);
   }
 
-  async findById<T>(id: string | number): Promise<DefaultDataType<T>> {
-    const response = await this.httpClient.request<DefaultDataType<T>>({
+  async findById<Task>(id: string | number): Promise<Task> {
+    const response = await this.circuitBreaker.fire<Task>({
       url: `${this.url}/${encodeURIComponent(id)}`,
       method: HttpMethod.GET,
     });
@@ -41,8 +34,8 @@ export default class RemoteTask {
     return getResponse(response);
   }
 
-  async create<T>(body: unknown): Promise<DefaultDataType<T>> {
-    const response = await this.httpClient.request<DefaultDataType<T>>({
+  async create<Task>(body: unknown): Promise<Task> {
+    const response = await this.circuitBreaker.fire<Task>({
       url: this.url,
       method: HttpMethod.POST,
       body,
@@ -51,11 +44,8 @@ export default class RemoteTask {
     return getResponse(response);
   }
 
-  async update<T = any>(
-    id: string | number,
-    body: T
-  ): Promise<DefaultDataType<T>> {
-    const response = await this.httpClient.request<DefaultDataType<T>>({
+  async update<Task>(id: string | number, body: Task): Promise<Task> {
+    const response = await this.circuitBreaker.fire<Task>({
       url: `${this.url}/${encodeURIComponent(id)}`,
       method: HttpMethod.PUT,
       body,
@@ -64,12 +54,16 @@ export default class RemoteTask {
     return getResponse(response);
   }
 
-  async deleteById<T = any>(id: string | number): Promise<DefaultDataType<T>> {
-    const response = await this.httpClient.request<DefaultDataType<T>>({
+  async deleteById<Task>(id: string | number): Promise<Task> {
+    const response = await this.circuitBreaker.fire<Task>({
       url: `${this.url}/${encodeURIComponent(id)}`,
       method: HttpMethod.DELETE,
     });
 
     return getResponse(response);
+  }
+
+  getCircuitBreakerParameters() {
+    return this.circuitBreaker.circuitParametersInfo;
   }
 }
